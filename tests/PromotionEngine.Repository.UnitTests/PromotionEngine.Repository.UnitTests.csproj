@@ -21,4 +21,9 @@
     </PackageReference>
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\PromotionEngine.Domain\PromotionEngine.Domain.csproj" />
+    <ProjectReference Include="..\..\src\PromotionEngine.Repository\PromotionEngine.Repository.csproj" />
+  </ItemGroup>
+
 </Project>

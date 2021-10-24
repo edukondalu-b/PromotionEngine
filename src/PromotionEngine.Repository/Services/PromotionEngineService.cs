@@ -1,4 +1,4 @@
-﻿using System;
+﻿using PromotionEngine.Domain.Models;
 using System.Collections.Generic;
 
 namespace PromotionEngine.Repository.Services

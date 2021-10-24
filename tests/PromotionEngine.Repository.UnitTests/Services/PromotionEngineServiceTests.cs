@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using PromotionEngine.Domain.Enums;
+using PromotionEngine.Domain.Models;
+using System.Collections.Generic;
 using Xunit;
 
 namespace PromotionEngine.Repository.Services

@@ -1,4 +1,4 @@
-﻿namespace PromotionEngine.Repository.Services
+﻿namespace PromotionEngine.Domain.Enums
 {
     public enum SKU
     {
