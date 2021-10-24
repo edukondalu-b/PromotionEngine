@@ -7,6 +7,13 @@ namespace PromotionEngine.Repository.Services
 {
     public class PromotionEngineServiceTests
     {
+        PromotionEngineService _promotionEngineService;
+
+        public PromotionEngineServiceTests()
+        {
+            _promotionEngineService = new PromotionEngineService();
+        }
+
         [Fact]
         public void ShouldReturnOneHundredForScenarioA()
         {
@@ -19,12 +26,21 @@ namespace PromotionEngine.Repository.Services
             };
 
             //Act
-            PromotionEngineService promotionEngineService= new PromotionEngineService();
-            decimal totalOrderAmount = promotionEngineService.CalculateTotalOrderValue(orders);
+            decimal totalOrderAmount = _promotionEngineService.CalculateTotalOrderValue(orders);
 
             //Assert
             Assert.True(totalOrderAmount > 0);
             Assert.Equal(100, totalOrderAmount);
+        }
+
+        [Fact]
+        public void ShouldReturnZeroForEmptyOrders()
+        {
+            //Act
+            decimal totalOrderAmount = _promotionEngineService.CalculateTotalOrderValue(null);
+
+            //Assert
+            Assert.Equal(0, totalOrderAmount);
         }
     }
 }

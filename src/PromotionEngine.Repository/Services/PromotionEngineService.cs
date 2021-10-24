@@ -8,6 +8,9 @@ namespace PromotionEngine.Repository.Services
         public decimal CalculateTotalOrderValue(List<Order> cartOrders)
         {
             decimal totalAmount = 0;
+
+            if (cartOrders == null) return totalAmount;
+
             foreach (Order order in cartOrders)
             {
                 Promotion promotion = null;
