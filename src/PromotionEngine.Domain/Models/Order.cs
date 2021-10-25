@@ -1,8 +1,10 @@
-﻿namespace PromotionEngine.Domain.Models
+﻿using PromotionEngine.Domain.Enums;
+
+namespace PromotionEngine.Domain.Models
 {
     public class Order
     {
-        public object SKU { get; set; }
+        public SKU SKU { get; set; }
 
         public decimal UnitPrice { get; set; }
 

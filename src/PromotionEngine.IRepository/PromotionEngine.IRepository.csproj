@@ -6,7 +6,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\PromotionEngine.Domain\PromotionEngine.Domain.csproj" />
-    <ProjectReference Include="..\PromotionEngine.IRepository\PromotionEngine.IRepository.csproj" />
   </ItemGroup>
 
 </Project>
