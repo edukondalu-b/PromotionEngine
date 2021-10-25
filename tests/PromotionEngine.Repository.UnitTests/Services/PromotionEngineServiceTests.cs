@@ -62,5 +62,26 @@ namespace PromotionEngine.Repository.Services
             Assert.True(totalOrderAmount > 0);
             Assert.Equal(370, totalOrderAmount);
         }
+
+
+        [Fact]
+        public void ShouldReturnTwoHundredAndEightyForScenarioC()
+        {
+            // Arrange
+            List<Order> orders = new List<Order>
+            {
+                new Order { SKU = SKU.A, UnitPrice = 50, Quantity = 3},
+                new Order { SKU = SKU.B, UnitPrice = 30, Quantity = 5},
+                new Order { SKU = SKU.C, UnitPrice = 20, Quantity = 1},
+                new Order { SKU = SKU.D, UnitPrice = 15, Quantity = 1}
+            };
+
+            //Act
+            decimal totalOrderAmount = _promotionEngineService.CalculateTotalOrderValue(orders);
+
+            //Assert
+            Assert.True(totalOrderAmount > 0);
+            Assert.Equal(280, totalOrderAmount);
+        }
     }
 }

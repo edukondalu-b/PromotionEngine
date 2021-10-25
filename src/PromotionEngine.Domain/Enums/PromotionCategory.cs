@@ -2,6 +2,7 @@
 {
     public enum PromotionCategory
     {
-        StandardDiscountOnNItemsOfSameSKU = 1
+        StandardDiscountOnNItemsOfSameSKU = 1,
+        StandardDiscountOnCombinationOfTwoOrMoreSKU = 2,
     }
 }

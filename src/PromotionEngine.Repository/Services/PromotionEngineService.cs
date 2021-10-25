@@ -25,35 +25,59 @@ namespace PromotionEngine.Repository.Services
 
             if (cartOrders == null) return totalAmount;
 
-            foreach (Order cartOrder in cartOrders)
+            do
             {
-                Promotion promotion = _promotionService.GetActivePromotions().Where(e => e.PromotionSKUId == cartOrder.SKU && !_appliedPromotions.Where(e => e == cartOrder.SKU).Any()).FirstOrDefault();
+                Order cartOrder = cartOrders.FirstOrDefault();
+                Promotion promotion = _promotionService.GetActivePromotions().Where(e => e.PromotionSKUId.Contains(cartOrder.SKU) && !_appliedPromotions.Where(e => e == cartOrder.SKU).Any()).FirstOrDefault();
                 if (promotion != null)
                 {
-                    if (promotion.PromotionCategory == PromotionCategory.StandardDiscountOnNItemsOfSameSKU)
+                    switch (promotion.PromotionCategory)
                     {
-                        if ((cartOrder.Quantity / promotion.Quantity) > 0)
-                        {
-                            decimal numOfDists = (cartOrder.Quantity / promotion.Quantity.Value);
-                            totalAmount += numOfDists * promotion.FixedPrice;
-                            if ((cartOrder.Quantity % promotion.Quantity) > 0)
+                        case PromotionCategory.StandardDiscountOnNItemsOfSameSKU:
+                            if ((cartOrder.Quantity / promotion.Quantity) > 0)
                             {
-                                decimal remaining = (cartOrder.Quantity % promotion.Quantity.Value);
-                                totalAmount += remaining * cartOrder.UnitPrice;
+                                decimal numOfDists = (cartOrder.Quantity / promotion.Quantity.Value);
+                                totalAmount += numOfDists * promotion.FixedPrice;
+                                if ((cartOrder.Quantity % promotion.Quantity) > 0)
+                                {
+                                    decimal remaining = (cartOrder.Quantity % promotion.Quantity.Value);
+                                    totalAmount += remaining * cartOrder.UnitPrice;
+                                }
+                                _appliedPromotions.Add(cartOrder.SKU);
                             }
-                            _appliedPromotions.Add(cartOrder.SKU);
-                        }
-                        else
-                        {
-                            totalAmount += cartOrder.Quantity * cartOrder.UnitPrice;
-                        }
+                            else
+                            {
+                                totalAmount += cartOrder.Quantity * cartOrder.UnitPrice;
+                            }
+                            cartOrders.Remove(cartOrder);
+                            break;
+                        case PromotionCategory.StandardDiscountOnCombinationOfTwoOrMoreSKU:
+                            List<Order> comboCartOrder = cartOrders.Where(e => promotion.PromotionSKUId.Contains(e.SKU)).ToList();
+                            if (comboCartOrder.Select(e=>e.SKU).Count() == promotion.PromotionSKUId.Count() && !_appliedPromotions.Where(e => comboCartOrder.Where(k => k.SKU == e).Any()).Any())
+                            {
+                                totalAmount += 1 * promotion.FixedPrice;
+                                foreach (var item in comboCartOrder)
+                                {
+                                    cartOrders.Remove(item);
+                                }
+                            }
+                            else
+                            {
+                                totalAmount += cartOrder.Quantity * cartOrder.UnitPrice;
+                                cartOrders.Remove(cartOrder);
+                            }
+                            break;
+                        default:
+                            // do nothing
+                            break;
                     }
                 }
                 else
                 {
                     totalAmount += cartOrder.Quantity * cartOrder.UnitPrice;
+                    cartOrders.Remove(cartOrder);
                 }
-            }
+            } while (cartOrders.Any());
 
             return totalAmount;
         }
