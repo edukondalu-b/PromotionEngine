@@ -1,21 +1,20 @@
 ﻿using PromotionEngine.Domain.Enums;
-using System;
 
 namespace PromotionEngine.Domain.Models
 {
     /// <summary>
-    /// Promotion SKU
+    /// SKU Unit Price
     /// </summary>
-    public class PromotionSKU
+    public class SKU_UnitPrice
     {
-        /// <summary>
-        /// Promotion Id
-        /// </summary>
-        public Guid PromotionId { get; set; }
-
         /// <summary>
         /// SKU Item
         /// </summary>
         public SKU SKU { get; set; }
+
+        /// <summary>
+        /// Unit Price
+        /// </summary>
+        public decimal UnitPrice { get; set; }
     }
 }

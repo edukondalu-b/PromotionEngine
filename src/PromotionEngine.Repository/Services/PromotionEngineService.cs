@@ -1,85 +1,91 @@
-﻿using PromotionEngine.Domain.Enums;
-using PromotionEngine.Domain.Models;
+﻿using PromotionEngine.Domain.Models;
 using PromotionEngine.IRepository.IServices;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace PromotionEngine.Repository.Services
 {
-    public class PromotionEngineService
+    /// <summary>
+    /// Promotion Engine Service
+    /// </summary>
+    public class PromotionEngineService : IPromotionEngineService
     {
-        // track the applied promotions on individual SKU's for checking the mutual exclusive condition
-        private static List<SKU> _appliedPromotions;
+        /// <summary>
+        /// total cart order amount
+        /// </summary>
+        private decimal _totalCartOrderAmount;
 
-        private readonly IPromotionService _promotionService;
+        /// <summary>
+        /// cart orders
+        /// </summary>
+        private List<ICartOrderService> _cartOrders;
 
         public PromotionEngineService()
         {
-            _appliedPromotions = new List<SKU>();
-            _promotionService = new PromotionService();
+            _totalCartOrderAmount = 0;
+
+            _cartOrders = new List<ICartOrderService>();
         }
 
-        public decimal CalculateTotalOrderValue(List<Order> cartOrders)
+        /// <summary>
+        /// Calculate total cart order value
+        /// </summary>
+        /// <param name="cartOrders"></param>
+        /// <returns>decimal</returns>
+        public decimal CalculateTotalOrderValue(List<ICartOrderService> cartOrders)
         {
-            decimal totalAmount = 0;
 
-            if (cartOrders == null) return totalAmount;
+            if (cartOrders == null) return _totalCartOrderAmount;
+
+            _cartOrders = cartOrders;
 
             do
             {
-                Order cartOrder = cartOrders.FirstOrDefault();
-                Promotion promotion = _promotionService.GetActivePromotions().Where(e => e.PromotionSKUId.Contains(cartOrder.SKU) && !_appliedPromotions.Where(e => e == cartOrder.SKU).Any()).FirstOrDefault();
-                if (promotion != null)
+                ICartOrderService cartOrder = _cartOrders.FirstOrDefault();
+                CartOrderResult cartOrderResult = cartOrder.CalculateOrderValue(new List<ICartOrderService> { cartOrder });
+                if (cartOrderResult != null)
                 {
-                    switch (promotion.PromotionCategory)
+                    if (cartOrderResult.AmountCalculated)
                     {
-                        case PromotionCategory.StandardDiscountOnNItemsOfSameSKU:
-                            if ((cartOrder.Quantity / promotion.Quantity) > 0)
+                        AddToFinalAmountAndRemoveOrder(cartOrderResult.CalculatedAmount, new List<ICartOrderService> { cartOrder });
+                    }
+                    if (cartOrderResult.IsComboItemsPromotion)
+                    {
+                        List<ICartOrderService> comboOrders = _cartOrders.Where(e => cartOrderResult.Promotion.PromotionSKUId.Contains(e.SKU)).ToList();
+                        if (comboOrders.Select(e => e.SKU).Distinct().Count() == cartOrderResult.Promotion.PromotionSKUId.Count())
+                        {
+                            comboOrders.ForEach(e => e.IgnoreComboPromotion = true);
+                            cartOrderResult = comboOrders.LastOrDefault()?.CalculateOrderValue(comboOrders);
+                            if (cartOrderResult.AmountCalculated)
                             {
-                                decimal numOfDists = (cartOrder.Quantity / promotion.Quantity.Value);
-                                totalAmount += numOfDists * promotion.FixedPrice;
-                                if ((cartOrder.Quantity % promotion.Quantity) > 0)
-                                {
-                                    decimal remaining = (cartOrder.Quantity % promotion.Quantity.Value);
-                                    totalAmount += remaining * cartOrder.UnitPrice;
-                                }
-                                _appliedPromotions.Add(cartOrder.SKU);
+                                AddToFinalAmountAndRemoveOrder(cartOrderResult.CalculatedAmount, comboOrders);
                             }
-                            else
+                        }
+                        else
+                        {
+                            comboOrders[0].IgnoreComboPromotion = true;
+                            cartOrderResult = comboOrders[0].CalculateOrderValue(new List<ICartOrderService> { comboOrders[0] });
+                            if (cartOrderResult.AmountCalculated)
                             {
-                                totalAmount += cartOrder.Quantity * cartOrder.UnitPrice;
+                                AddToFinalAmountAndRemoveOrder(cartOrderResult.CalculatedAmount, new List<ICartOrderService> { comboOrders[0] });
                             }
-                            cartOrders.Remove(cartOrder);
-                            break;
-                        case PromotionCategory.StandardDiscountOnCombinationOfTwoOrMoreSKU:
-                            List<Order> comboCartOrder = cartOrders.Where(e => promotion.PromotionSKUId.Contains(e.SKU)).ToList();
-                            if (comboCartOrder.Select(e=>e.SKU).Count() == promotion.PromotionSKUId.Count() && !_appliedPromotions.Where(e => comboCartOrder.Where(k => k.SKU == e).Any()).Any())
-                            {
-                                totalAmount += 1 * promotion.FixedPrice;
-                                foreach (var item in comboCartOrder)
-                                {
-                                    cartOrders.Remove(item);
-                                }
-                            }
-                            else
-                            {
-                                totalAmount += cartOrder.Quantity * cartOrder.UnitPrice;
-                                cartOrders.Remove(cartOrder);
-                            }
-                            break;
-                        default:
-                            // do nothing
-                            break;
+                        }
                     }
                 }
-                else
-                {
-                    totalAmount += cartOrder.Quantity * cartOrder.UnitPrice;
-                    cartOrders.Remove(cartOrder);
-                }
-            } while (cartOrders.Any());
+            } while (_cartOrders.Any());
 
-            return totalAmount;
+            return _totalCartOrderAmount;
+        }
+
+        /// <summary>
+        /// Add to total amount and remove calculated order
+        /// </summary>
+        /// <param name="calculatedAmount"></param>
+        /// <param name="cartOrderItems"></param>
+        private void AddToFinalAmountAndRemoveOrder(decimal calculatedAmount, IEnumerable<ICartOrderService> cartOrderItems)
+        {
+            _totalCartOrderAmount += calculatedAmount;
+            _cartOrders = _cartOrders.Where(e => !cartOrderItems.Where(k => k.SKU == e.SKU).Any()).ToList();
         }
     }
 }

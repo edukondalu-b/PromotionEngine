@@ -1,16 +1,30 @@
 ﻿using PromotionEngine.Domain.Enums;
-using PromotionEngine.Domain.Models;
+using PromotionEngine.IRepository.IServices;
+using PromotionEngine.Repository.Services;
 using System.Collections.Generic;
 using Xunit;
 
-namespace PromotionEngine.Repository.Services
+namespace PromotionEngine.Repository.UnitTests.Services
 {
     public class PromotionEngineServiceTests
     {
-        PromotionEngineService _promotionEngineService;
+        private readonly IPromotionEngineService _promotionEngineService;
+
+        private readonly IPromotionCategoryService _promotionCategoryService;
+
+        private static IPromotionService _promotionService;
+
+        private const decimal sku_A_UnitPrice = 50;
+        private const decimal sku_B_UnitPrice = 30;
+        private const decimal sku_C_UnitPrice = 20;
+        private const decimal sku_D_UnitPrice = 15;
 
         public PromotionEngineServiceTests()
         {
+            _promotionService = new PromotionService();
+
+            _promotionCategoryService = new PromotionCategoryService(_promotionService);
+
             _promotionEngineService = new PromotionEngineService();
         }
 
@@ -18,11 +32,11 @@ namespace PromotionEngine.Repository.Services
         public void ShouldReturnOneHundredForScenarioA()
         {
             // Arrange
-            List<Order> orders = new List<Order>
+            List<ICartOrderService> orders = new List<ICartOrderService>
             {
-                new Order { SKU = SKU.A, UnitPrice = 50, Quantity = 1},
-                new Order { SKU = SKU.B, UnitPrice = 30, Quantity = 1},
-                new Order { SKU = SKU.C, UnitPrice = 20, Quantity = 1}
+                new SKUACartOrderService(_promotionCategoryService) { SKU = SKU.A, UnitPrice = sku_A_UnitPrice, Quantity = 1},
+                new SKUBCartOrderService(_promotionCategoryService) { SKU = SKU.B, UnitPrice = sku_B_UnitPrice, Quantity = 1},
+                new SKUCCartOrderService(_promotionCategoryService) { SKU = SKU.C, UnitPrice = sku_C_UnitPrice, Quantity = 1}
             };
 
             //Act
@@ -48,11 +62,11 @@ namespace PromotionEngine.Repository.Services
         public void ShouldReturnThreeHundredAndSeventyForScenarioB()
         {
             // Arrange
-            List<Order> orders = new List<Order>
+            List<ICartOrderService> orders = new List<ICartOrderService>
             {
-                new Order { SKU = SKU.A, UnitPrice = 50, Quantity = 5},
-                new Order { SKU = SKU.B, UnitPrice = 30, Quantity = 5},
-                new Order { SKU = SKU.C, UnitPrice = 20, Quantity = 1}
+                new SKUACartOrderService(_promotionCategoryService) { SKU = SKU.A, UnitPrice = sku_A_UnitPrice, Quantity = 5},
+                new SKUBCartOrderService(_promotionCategoryService) { SKU = SKU.B, UnitPrice = sku_B_UnitPrice, Quantity = 5},
+                new SKUCCartOrderService(_promotionCategoryService) { SKU = SKU.C, UnitPrice = sku_C_UnitPrice, Quantity = 1}
             };
 
             //Act
@@ -68,12 +82,12 @@ namespace PromotionEngine.Repository.Services
         public void ShouldReturnTwoHundredAndEightyForScenarioC()
         {
             // Arrange
-            List<Order> orders = new List<Order>
+            List<ICartOrderService> orders = new List<ICartOrderService>
             {
-                new Order { SKU = SKU.A, UnitPrice = 50, Quantity = 3},
-                new Order { SKU = SKU.B, UnitPrice = 30, Quantity = 5},
-                new Order { SKU = SKU.C, UnitPrice = 20, Quantity = 1},
-                new Order { SKU = SKU.D, UnitPrice = 15, Quantity = 1}
+                new SKUACartOrderService(_promotionCategoryService) { SKU = SKU.A, UnitPrice = sku_A_UnitPrice, Quantity = 3},
+                new SKUBCartOrderService(_promotionCategoryService) { SKU = SKU.B, UnitPrice = sku_B_UnitPrice, Quantity = 5},
+                new SKUCCartOrderService(_promotionCategoryService) { SKU = SKU.C, UnitPrice = sku_C_UnitPrice, Quantity = 1},
+                new SKUDCartOrderService(_promotionCategoryService) { SKU = SKU.D, UnitPrice = sku_D_UnitPrice, Quantity = 1}
             };
 
             //Act
@@ -82,6 +96,48 @@ namespace PromotionEngine.Repository.Services
             //Assert
             Assert.True(totalOrderAmount > 0);
             Assert.Equal(280, totalOrderAmount);
+        }
+
+
+        [Fact]
+        public void ShouldReturnThreeHundredAndTenForScenarioD()
+        {
+            // Arrange
+            List<ICartOrderService> orders = new List<ICartOrderService>
+            {
+                new SKUACartOrderService(_promotionCategoryService) { SKU = SKU.A, UnitPrice = sku_A_UnitPrice, Quantity = 3},
+                new SKUBCartOrderService(_promotionCategoryService) { SKU = SKU.B, UnitPrice = sku_B_UnitPrice, Quantity = 5},
+                new SKUCCartOrderService(_promotionCategoryService) { SKU = SKU.C, UnitPrice = sku_C_UnitPrice, Quantity = 2},
+                new SKUDCartOrderService(_promotionCategoryService) { SKU = SKU.D, UnitPrice = sku_D_UnitPrice, Quantity = 2}
+            };
+
+            //Act
+            decimal totalOrderAmount = _promotionEngineService.CalculateTotalOrderValue(orders);
+
+            //Assert
+            Assert.True(totalOrderAmount > 0);
+            Assert.Equal(310, totalOrderAmount);
+        }
+
+
+        [Fact]
+        public void ShouldReturnTwoHundredAndFiftyFiveForScenarioE()
+        {
+            // Arrange
+            List<ICartOrderService> orders = new List<ICartOrderService>
+            {
+                new SKUACartOrderService(_promotionCategoryService) { SKU = SKU.A, UnitPrice = sku_A_UnitPrice, Quantity = 4},
+                new SKUBCartOrderService(_promotionCategoryService) { SKU = SKU.B, UnitPrice = sku_B_UnitPrice, Quantity = 1},
+                new SKUCCartOrderService(_promotionCategoryService) { SKU = SKU.C, UnitPrice = sku_C_UnitPrice, Quantity = 1},
+                new SKUDCartOrderService(_promotionCategoryService) { SKU = SKU.D, UnitPrice = sku_D_UnitPrice, Quantity = 2}
+            };
+
+            //Act
+            decimal totalOrderAmount = _promotionEngineService.CalculateTotalOrderValue(orders);
+
+            //Assert
+            Assert.True(totalOrderAmount > 0);
+            Assert.Equal(255, totalOrderAmount);
         }
     }
 }

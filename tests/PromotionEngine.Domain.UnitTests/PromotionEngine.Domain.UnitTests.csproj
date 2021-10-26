@@ -4,13 +4,7 @@
     <TargetFramework>net5.0</TargetFramework>
 
     <IsPackable>false</IsPackable>
-
-    <RootNamespace>PromotionEngine.Repository.UnitTests</RootNamespace>
   </PropertyGroup>
-
-  <ItemGroup>
-    <None Remove="Services\PromotionEngineServiceTests.cs~RF19965cf1.TMP" />
-  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.9.4" />
@@ -27,7 +21,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\PromotionEngine.Domain\PromotionEngine.Domain.csproj" />
-    <ProjectReference Include="..\..\src\PromotionEngine.Repository\PromotionEngine.Repository.csproj" />
   </ItemGroup>
 
 </Project>

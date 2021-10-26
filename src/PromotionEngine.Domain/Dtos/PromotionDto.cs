@@ -6,13 +6,24 @@ using System.Linq;
 
 namespace PromotionEngine.Domain.Dtos
 {
+    /// <summary>
+    /// Promotion Dto
+    /// </summary>
     public class PromotionDto
     {
-
+        /// <summary>
+        /// randome Guid's to maintain relation between Promotion & SKU items
+        /// </summary>
         private readonly List<string> randomGuids = new List<string> { "c3253f17-83b3-41b4-8669-33cc6a09459f", "54b129d9-f118-4bd7-be24-4dcca2fec631", "8c87b0b5-aae6-4e2c-9c6d-a22b34dff592" };
 
+        /// <summary>
+        /// promotions data
+        /// </summary>
         private IEnumerable<Promotion> promotions;
 
+        /// <summary>
+        /// SKU items for which promotions can be applied
+        /// </summary>
         IEnumerable<PromotionSKU> _promotionSkuItems;
 
         public PromotionDto()
@@ -36,6 +47,9 @@ namespace PromotionEngine.Domain.Dtos
             };
         }
 
+        /// <summary>
+        /// Promotions
+        /// </summary>
         public IEnumerable<Promotion> Promotions { get => this.promotions; }
     }
 }
