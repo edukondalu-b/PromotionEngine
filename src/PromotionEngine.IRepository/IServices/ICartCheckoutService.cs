@@ -8,10 +8,10 @@ namespace PromotionEngine.IRepository.IServices
     public interface ICartCheckoutService
     {
         /// <summary>
-        /// Get cart orders list based on selected scenario's available
+        /// Check out cart orders and calculate total amount based on selected scenario's available
         /// </summary>
         /// <param name="scenario"></param>
-        /// <returns>List<ICartOrderService></returns>
-        List<ICartOrderService> GetCartOrdersList(int scenario);
+        /// <returns>decimal</returns>
+        decimal CheckoutCartOrdersAndCalculateTotalAmount(int scenario);
     }
 }

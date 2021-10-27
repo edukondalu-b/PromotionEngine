@@ -1,5 +1,6 @@
 ﻿using PromotionEngine.Domain.Models;
 using PromotionEngine.IRepository.IServices;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -35,44 +36,46 @@ namespace PromotionEngine.Repository.Services
         public decimal CalculateTotalOrderValue(List<ICartOrderService> cartOrders)
         {
 
-            if (cartOrders == null) return _totalCartOrderAmount;
+            if (cartOrders == null || cartOrders?.Count == 0) return _totalCartOrderAmount;
 
             _cartOrders = cartOrders;
 
-            do
+            try
             {
-                ICartOrderService cartOrder = _cartOrders.FirstOrDefault();
-                CartOrderResult cartOrderResult = cartOrder.CalculateOrderValue(new List<ICartOrderService> { cartOrder });
-                if (cartOrderResult != null)
+                do
                 {
-                    if (cartOrderResult.AmountCalculated)
+                    ICartOrderService cartOrder = _cartOrders.FirstOrDefault();
+                    CartOrderResult cartOrderResult = cartOrder.CalculateOrderValue(new List<ICartOrderService> { cartOrder });
+                    if (cartOrderResult != null)
                     {
-                        AddToFinalAmountAndRemoveOrder(cartOrderResult.CalculatedAmount, new List<ICartOrderService> { cartOrder });
-                    }
-                    if (cartOrderResult.IsComboItemsPromotion)
-                    {
-                        List<ICartOrderService> comboOrders = _cartOrders.Where(e => cartOrderResult.Promotion.PromotionSKUId.Contains(e.SKU)).ToList();
-                        if (comboOrders.Select(e => e.SKU).Distinct().Count() == cartOrderResult.Promotion.PromotionSKUId.Count())
+                        if (cartOrderResult.AmountCalculated)
                         {
-                            comboOrders.ForEach(e => e.IgnoreComboPromotion = true);
-                            cartOrderResult = comboOrders.LastOrDefault()?.CalculateOrderValue(comboOrders);
-                            if (cartOrderResult.AmountCalculated)
+                            AddToFinalAmountAndRemoveOrder(cartOrderResult.CalculatedAmount, new List<ICartOrderService> { cartOrder });
+                        }
+                        if (cartOrderResult.IsComboItemsPromotion)
+                        {
+                            List<ICartOrderService> comboOrders = _cartOrders.Where(e => cartOrderResult.Promotion.PromotionSKUId.Contains(e.SKU)).ToList();
+                            if (comboOrders.Select(e => e.SKU).Distinct().Count() == cartOrderResult.Promotion.PromotionSKUId.Count())
                             {
-                                AddToFinalAmountAndRemoveOrder(cartOrderResult.CalculatedAmount, comboOrders);
+                                comboOrders.ForEach(e => e.IgnoreComboPromotion = true);
+                                cartOrderResult = comboOrders.LastOrDefault()?.CalculateOrderValue(comboOrders);
+                                if (cartOrderResult.AmountCalculated)
+                                {
+                                    AddToFinalAmountAndRemoveOrder(cartOrderResult.CalculatedAmount, comboOrders);
+                                }
+                            }
+                            else
+                            {
+                                cartOrder.IgnoreComboPromotion = true;
                             }
                         }
-                        else
-                        {
-                            comboOrders[0].IgnoreComboPromotion = true;
-                            cartOrderResult = comboOrders[0].CalculateOrderValue(new List<ICartOrderService> { comboOrders[0] });
-                            if (cartOrderResult.AmountCalculated)
-                            {
-                                AddToFinalAmountAndRemoveOrder(cartOrderResult.CalculatedAmount, new List<ICartOrderService> { comboOrders[0] });
-                            }
-                        }
                     }
-                }
-            } while (_cartOrders.Any());
+                } while (_cartOrders.Any());
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("An error has been occured while calculating the total order value. Please try again later.");
+            }
 
             return _totalCartOrderAmount;
         }

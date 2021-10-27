@@ -10,11 +10,11 @@ namespace PromotionEngine.Repository.UnitTests.Services
 {
     public class PromotionServiceTests
     {
-        private static IPromotionService _promotionService;
+        private readonly IPromotionService _promotionService;
 
-        public PromotionServiceTests()
+        public PromotionServiceTests(IPromotionService promotionService)
         {
-            _promotionService = new PromotionService();
+            _promotionService = promotionService;
         }
 
         [Fact]
@@ -40,32 +40,30 @@ namespace PromotionEngine.Repository.UnitTests.Services
             Assert.Equal(new List<SKU> { SKU.A }, activePromotion.PromotionSKUId.ToList());
         }
 
-        //[Fact]
-        //public void ShouldReturnNullPromotion()
-        //{
-        //    // Arrange
-        //    _promotionService.AddSKUToAppliedPromotions(new List<SKU> { SKU.D });
+        [Fact]
+        public void ShouldReturnNullPromotion()
+        {
+            // Arrange
+            _promotionService.AddSKUToAppliedPromotions(new List<SKU> { SKU.D });
 
-        //    //Act
-        //    Promotion activePromotion = _promotionService.GetApplicablePromotionForCartOrders(new List<ICartOrderService> { new SKUACartOrderService { SKU = SKU.D, UnitPrice = 15, Quantity = 1 } });
+            //Act
+            Promotion activePromotion = _promotionService.GetApplicablePromotionForCartOrders(new List<ICartOrderService> { new SKUACartOrderService { SKU = SKU.D, UnitPrice = 15, Quantity = 1 } });
 
-        //    //Assert
-        //    Assert.Null(activePromotion);
-        //}
+            //Assert
+            Assert.Null(activePromotion);
+        }
 
-        //[Fact]
-        //public void ShouldReturnNullPromotionAfterExceedingMaximumPromotionsApplied()
-        //{
-        //    // Arrange
-        //    _promotionService.AddSKUToAppliedPromotions(new List<SKU> { SKU.A, SKU.B, SKU.C });
+        [Fact]
+        public void ShouldReturnNullPromotionAfterExceedingMaximumPromotionsApplied()
+        {
+            // Arrange
+            _promotionService.AddSKUToAppliedPromotions(new List<SKU> { SKU.A, SKU.B, SKU.C });
 
-        //    //Act
-        //    Promotion activePromotion = _promotionService.GetApplicablePromotionForCartOrders(new List<ICartOrderService> { new SKUACartOrderService { SKU = SKU.A, UnitPrice = 50, Quantity = 1 } });
+            //Act
+            Promotion activePromotion = _promotionService.GetApplicablePromotionForCartOrders(new List<ICartOrderService> { new SKUACartOrderService { SKU = SKU.A, UnitPrice = 50, Quantity = 1 } });
 
-        //    //Assert
-        //    Assert.Null(activePromotion);
-        //}
-
-
+            //Assert
+            Assert.Null(activePromotion);
+        }
     }
 }

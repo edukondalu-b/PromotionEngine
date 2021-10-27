@@ -19,13 +19,13 @@ namespace PromotionEngine.Repository.UnitTests.Services
         private const decimal sku_C_UnitPrice = 20;
         private const decimal sku_D_UnitPrice = 15;
 
-        public PromotionEngineServiceTests()
+        public PromotionEngineServiceTests(IPromotionService promotionService, IPromotionEngineService promotionEngineService, IPromotionCategoryService promotionCategoryService)
         {
-            _promotionService = new PromotionService();
+            _promotionService = promotionService;
 
-            _promotionCategoryService = new PromotionCategoryService(_promotionService);
+            _promotionEngineService = promotionEngineService;
 
-            _promotionEngineService = new PromotionEngineService();
+            _promotionCategoryService = promotionCategoryService;
         }
 
         [Fact]

@@ -16,11 +16,11 @@ namespace PromotionEngine.Repository.UnitTests.Services
 
         private readonly List<ICartOrderService> _cartOrders;
 
-        public PromotionCategoryServiceTests()
+        public PromotionCategoryServiceTests(IPromotionService promotionService, IPromotionCategoryService promotionCategoryService)
         {
-            _promotionService = new PromotionService();
+            _promotionService = promotionService;
 
-            _promotionCategoryService = new PromotionCategoryService(_promotionService);
+            _promotionCategoryService = promotionCategoryService;
 
             _cartOrders = new List<ICartOrderService>
             {
@@ -90,11 +90,9 @@ namespace PromotionEngine.Repository.UnitTests.Services
         [ClassData(typeof(SKUCAndSKUDTestData))]
         public void ShouldReturnCardOrderResultObjectForSKUCAndSKUDWithAppliedPromotion(List<ICartOrderService> cartOrders, CartOrderResult expectedCartOrderResult)
         {
-            //Arrange
-            //CartOrderResult expectedCartOrderResult = new CartOrderResult() { AmountCalculated = true, CalculatedAmount = 30, PromotionApplied = true, IsComboItemsPromotion = false };
-
             //Act
             CartOrderResult actualCartOrderResult = _promotionCategoryService.CalculatePriceForPromotionCategory(cartOrders);
+
             //Assert
             Assert.NotNull(actualCartOrderResult);
             Assert.Equal(expectedCartOrderResult.CalculatedAmount, actualCartOrderResult.CalculatedAmount);
@@ -132,7 +130,9 @@ public class SKUCAndSKUDTestData : IEnumerable<object[]>
         new object[] {new List<ICartOrderService> { new SKUCCartOrderService { SKU = SKU.C, UnitPrice = 20, Quantity = 1, IgnoreComboPromotion = true }, new SKUDCartOrderService { SKU = SKU.D, UnitPrice = 15, Quantity = 1, IgnoreComboPromotion = true } },
         new CartOrderResult() { AmountCalculated = true, CalculatedAmount = 30, PromotionApplied = true, IsComboItemsPromotion = false }},
         new object[] {new List<ICartOrderService> { new SKUCCartOrderService { SKU = SKU.C, UnitPrice = 20, Quantity = 2, IgnoreComboPromotion = true }, new SKUDCartOrderService { SKU = SKU.D, UnitPrice = 15, Quantity = 2, IgnoreComboPromotion = true } },
-        new CartOrderResult() { AmountCalculated = true, CalculatedAmount = 60, PromotionApplied = true, IsComboItemsPromotion = false } }
+        new CartOrderResult() { AmountCalculated = true, CalculatedAmount = 60, PromotionApplied = true, IsComboItemsPromotion = false } },
+        new object[] {new List<ICartOrderService> { new SKUCCartOrderService { SKU = SKU.C, UnitPrice = 20, Quantity = 2, IgnoreComboPromotion = true }, new SKUDCartOrderService { SKU = SKU.D, UnitPrice = 15, Quantity = 4, IgnoreComboPromotion = true } },
+        new CartOrderResult() { AmountCalculated = true, CalculatedAmount = 90, PromotionApplied = true, IsComboItemsPromotion = false } }
     };
 
     public IEnumerator<object[]> GetEnumerator() => _data.GetEnumerator();

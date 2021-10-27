@@ -2,7 +2,6 @@
 using PromotionEngine.Domain.Enums;
 using PromotionEngine.Domain.Models;
 using PromotionEngine.IRepository.IServices;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -13,64 +12,51 @@ namespace PromotionEngine.Repository.Services
     /// </summary>
     public class CartCheckoutService : ICartCheckoutService
     {
+        /// <summary>
         /// initialize promotion category service
         /// </summary>
         private readonly IPromotionCategoryService _promotionCategoryService;
 
-        public CartCheckoutService(IPromotionCategoryService promotionCategoryService)
+        /// <summary>
+        /// initialize promotion engine service
+        /// </summary>
+        private readonly IPromotionEngineService _promotionEngineService;
+
+
+        public CartCheckoutService(IPromotionCategoryService promotionCategoryService, IPromotionEngineService promotionEngineService)
         {
             _promotionCategoryService = promotionCategoryService;
+            _promotionEngineService = promotionEngineService;
         }
 
         /// <summary>
-        /// Get IEnumerable<ICartOrderService> based on selected scenario's available
+        /// Check out cart orders and calculate total amount based on selected scenario's available
         /// </summary>
         /// <param name="scenario"></param>
-        /// <returns>IEnumerable<ICartOrderService></returns>
-        public List<ICartOrderService> GetCartOrdersList(int scenario)
+        /// <returns>decimal</returns>
+        public decimal CheckoutCartOrdersAndCalculateTotalAmount(int scenario)
         {
-            IEnumerable<ICartOrderService> returnOrders = new List<ICartOrderService>();
-            IEnumerable<SKU_UnitPrice> skuList = (new SKU_UnitPriceDto()).SkuUnitPrice;
-            decimal SKU_A_UP = skuList.Where(e => e.SKU == SKU.A).Select(k => k.UnitPrice).FirstOrDefault();
-            decimal SKU_B_UP = skuList.Where(e => e.SKU == SKU.B).Select(k => k.UnitPrice).FirstOrDefault();
-            decimal SKU_C_UP = skuList.Where(e => e.SKU == SKU.C).Select(k => k.UnitPrice).FirstOrDefault();
-            decimal SKU_D_UP = skuList.Where(e => e.SKU == SKU.D).Select(k => k.UnitPrice).FirstOrDefault();
-            switch (scenario)
+            List<ICartOrderService> cartOrders = new List<ICartOrderService>();
+            List<CartItem> cartOrderItems = (new CartOrderDto(scenario)).CartOrders;
+            foreach (CartItem cartOrderItem in cartOrderItems)
             {
-                case 1:
-                    returnOrders = new List<ICartOrderService>()
-                    {
-                       new SKUACartOrderService(_promotionCategoryService) {Quantity = 1, SKU = SKU.A,UnitPrice =  SKU_A_UP},
-                       new SKUBCartOrderService(_promotionCategoryService) {Quantity = 1, SKU = SKU.B, UnitPrice=SKU_B_UP },
-                       new SKUCCartOrderService(_promotionCategoryService) {Quantity = 1, SKU = SKU.C, UnitPrice =SKU_C_UP, IgnoreComboPromotion = true }
-                    };
-                    Console.WriteLine("Scenario A");
-                    break;
-                case 2:
-                    returnOrders = new List<ICartOrderService>()
-                    {
-                       new SKUACartOrderService(_promotionCategoryService) {Quantity = 5, SKU = SKU.A ,UnitPrice =  SKU_A_UP},
-                       new SKUBCartOrderService(_promotionCategoryService) {Quantity = 5, SKU = SKU.B, UnitPrice=SKU_B_UP },
-                       new SKUCCartOrderService(_promotionCategoryService) {Quantity = 1, SKU = SKU.C, UnitPrice =SKU_C_UP,IgnoreComboPromotion = true }
-                    };
-                    Console.WriteLine("Scenario B");
-                    break;
-                case 3:
-                    returnOrders = new List<ICartOrderService>()
-                    {
-                       new SKUACartOrderService(_promotionCategoryService) {Quantity = 3, SKU = SKU.A ,UnitPrice =  SKU_A_UP},
-                       new SKUBCartOrderService(_promotionCategoryService) {Quantity = 5, SKU = SKU.B , UnitPrice=SKU_B_UP},
-                       new SKUCCartOrderService(_promotionCategoryService) {Quantity = 1, SKU = SKU.C, UnitPrice =SKU_C_UP,IgnoreComboPromotion = false },
-                       new SKUDCartOrderService(_promotionCategoryService) {Quantity = 1, SKU = SKU.D, UnitPrice=SKU_D_UP,IgnoreComboPromotion = true }
-                    };
-                    Console.WriteLine("Scenario C");
-                    break;
-                default:
-                    returnOrders = null;
-                    Console.WriteLine("Please enter a valid selection between 1 to 3");
-                    break;
+                ICartOrderService cartOrderService = cartOrderItem.SKU switch
+                {
+                    SKU.A => new SKUACartOrderService(_promotionCategoryService) { Quantity = cartOrderItem.Quantity, SKU = SKU.A, UnitPrice = cartOrderItem.UnitPrice },
+                    SKU.B => new SKUBCartOrderService(_promotionCategoryService) { Quantity = cartOrderItem.Quantity, SKU = SKU.B, UnitPrice = cartOrderItem.UnitPrice },
+                    SKU.C => new SKUCCartOrderService(_promotionCategoryService) { Quantity = cartOrderItem.Quantity, SKU = SKU.C, UnitPrice = cartOrderItem.UnitPrice },
+                    SKU.D => new SKUDCartOrderService(_promotionCategoryService) { Quantity = cartOrderItem.Quantity, SKU = SKU.D, UnitPrice = cartOrderItem.UnitPrice },
+                    _ => null
+                };
+
+                if (cartOrderService != null)
+                {
+                    cartOrders.Add(cartOrderService);
+                }
             }
-            return returnOrders?.OrderBy(e => e.SKU).ToList();
+            cartOrders = cartOrders?.OrderBy(e => e.SKU).ToList();
+
+            return _promotionEngineService.CalculateTotalOrderValue(cartOrders);
         }
     }
 }

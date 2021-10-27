@@ -30,45 +30,51 @@ namespace PromotionEngine.Repository.Services
         public CartOrderResult CalculatePriceForPromotionCategory(List<ICartOrderService> cartOrders)
         {
             CartOrderResult cartOrderResult = new CartOrderResult() { AmountCalculated = false, CalculatedAmount = 0, PromotionApplied = false, IsComboItemsPromotion = false };
-
-            Promotion promotionCode = _promotionService.GetApplicablePromotionForCartOrders(cartOrders);
-            if (promotionCode != null)
+            try
             {
-                if (promotionCode.PromotionCategory != PromotionCategory.StandardDiscountOnCombinationOfTwoOrMoreSKU || cartOrders.Where(e => e.IgnoreComboPromotion == true).Count() == cartOrders.Count())
+                Promotion promotionCode = _promotionService.GetApplicablePromotionForCartOrders(cartOrders);
+                if (promotionCode != null)
                 {
-                    switch (promotionCode.PromotionCategory)
+                    if (promotionCode.PromotionCategory != PromotionCategory.StandardDiscountOnCombinationOfTwoOrMoreSKU || cartOrders.Where(e => e.IgnoreComboPromotion == true).Count() == cartOrders.Count())
                     {
-                        case PromotionCategory.StandardDiscountOnNItemsOfSameSKU:
+                        switch (promotionCode.PromotionCategory)
+                        {
+                            case PromotionCategory.StandardDiscountOnNItemsOfSameSKU:
 
-                            (cartOrderResult.CalculatedAmount, cartOrderResult.PromotionApplied) = StandardDiscountOnNItemsOfSameSKU(cartOrders[0], promotionCode);
-                            break;
-                        case PromotionCategory.StandardDiscountOnCombinationOfTwoOrMoreSKU:
+                                (cartOrderResult.CalculatedAmount, cartOrderResult.PromotionApplied) = StandardDiscountOnNItemsOfSameSKU(cartOrders[0], promotionCode);
+                                break;
+                            case PromotionCategory.StandardDiscountOnCombinationOfTwoOrMoreSKU:
 
-                            (cartOrderResult.CalculatedAmount, cartOrderResult.PromotionApplied) = StandardDiscountOnCombinationOfTwoOrMoreSKU(cartOrders, promotionCode);
-                            break;
+                                (cartOrderResult.CalculatedAmount, cartOrderResult.PromotionApplied) = StandardDiscountOnCombinationOfTwoOrMoreSKU(cartOrders, promotionCode);
+                                break;
 
-                        default:
-                            // do nothing
-                            break;
+                            default:
+                                // do nothing
+                                break;
+                        }
+
+                        cartOrderResult.AmountCalculated = true;
+
+                        if (cartOrderResult.PromotionApplied)
+                        {
+                            _promotionService.AddSKUToAppliedPromotions(cartOrders.Select(e => e.SKU).ToList());
+                        }
                     }
-
-                    cartOrderResult.AmountCalculated = true;
-
-                    if (cartOrderResult.PromotionApplied)
+                    else
                     {
-                        _promotionService.AddSKUToAppliedPromotions(cartOrders.Select(e => e.SKU).ToList());
+                        cartOrderResult.IsComboItemsPromotion = true;
+                        cartOrderResult.Promotion = promotionCode;
                     }
                 }
                 else
                 {
-                    cartOrderResult.IsComboItemsPromotion = true;
-                    cartOrderResult.Promotion = promotionCode;
+                    cartOrders.ForEach(k => cartOrderResult.CalculatedAmount += (k.UnitPrice * k.Quantity));
+                    cartOrderResult.AmountCalculated = true;
                 }
             }
-            else
+            catch (Exception)
             {
-                cartOrders.ForEach(k => cartOrderResult.CalculatedAmount += (k.UnitPrice * k.Quantity));
-                cartOrderResult.AmountCalculated = true;
+                throw;
             }
             return cartOrderResult;
         }
@@ -150,7 +156,7 @@ namespace PromotionEngine.Repository.Services
                 else
                 {
                     cartItems.ForEach(k => calculatedAmount += (k.UnitPrice * 1));
-                    cartItems = cartItems.Where(e => !comboCartOrder.Where(k => k.Id == e.Id).Any()).ToList();
+                    cartItems = cartItems.Where(e => !cartItems.Where(k => k.Id == e.Id).Any()).ToList();
                 }
 
             } while (cartItems.Any());

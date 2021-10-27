@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Options;
-using PromotionEngine.Domain.Enums;
+﻿using PromotionEngine.Domain.Enums;
 using PromotionEngine.Domain.Models;
 using System.Collections.Generic;
 
